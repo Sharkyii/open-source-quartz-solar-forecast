@@ -7,14 +7,14 @@ fs = HfFileSystem()
 
 
 def get_pv_metadata(testset: pd.DataFrame):
-    # Download from Hugging Face or load from cache
+    # download from huggingface or load from cache
     cache_dir = "data/pv"
     metadata_file = f"{cache_dir}/metadata.csv"
     
     if not os.path.exists(metadata_file):
         os.makedirs(cache_dir, exist_ok=True)
         fs.get("datasets/openclimatefix/uk_pv/metadata.csv", metadata_file)
-
+        
     # Load and prepare metadata
     metadata_df = pd.read_csv(metadata_file)
     metadata_df = metadata_df.rename(columns={"ss_id": "pv_id"})
@@ -39,7 +39,7 @@ def get_pv_metadata(testset: pd.DataFrame):
 def get_pv_truth(testset: pd.DataFrame):
     """
     Load PV ground truth data from Hugging Face dataset.
-    Dataset now uses parquet format: 5_minutely/year=YYYY/month=MM/data.parquet
+    Dataset uses parquet format: 5_minutely/year=YYYY/month=MM/data.parquet
     """
     print("Loading PV data")
     
@@ -52,7 +52,7 @@ def get_pv_truth(testset: pd.DataFrame):
     testset['month'] = testset['timestamp_dt'].dt.month
     year_months = testset[['year', 'month']].drop_duplicates()
     
-    # Download and load parquet files for each year-month
+    # downloads and load parquet files for each year-month
     all_pv_data = []
     for _, row in year_months.iterrows():
         year = int(row['year'])
@@ -64,16 +64,10 @@ def get_pv_truth(testset: pd.DataFrame):
             hf_path = f"datasets/openclimatefix/uk_pv/5_minutely/year={year}/month={month:02d}/data.parquet"
             fs.get(hf_path, cache_file)
         
-        try:
-            df = pd.read_parquet(cache_file)
-            all_pv_data.append(df)
-            print(f"Loaded {len(df)} records from {year}-{month:02d}")
-        except Exception as e:
-            print(f"Skipping {year}-{month:02d}: {e}")
-            # Remove corrupted cache file
-            if os.path.exists(cache_file):
-                os.remove(cache_file)
-            continue
+        df = pd.read_parquet(cache_file)
+        all_pv_data.append(df)
+        print(f"Loaded {len(df)} records from {year}-{month:02d}")
+
     
     # Combine and prepare data
     pv_data = pd.concat(all_pv_data, ignore_index=True)
@@ -101,7 +95,7 @@ def get_pv_truth(testset: pd.DataFrame):
             future_datetime = base_datetime + pd.Timedelta(hours=i)
             time_window = pd.Timedelta(minutes=5)
             
-            # Find closest matching timestamp within 5-minute window
+            # finds closest matching timestamp within 5-minute window
             mask = (
                 (pv_data['pv_id'] == pv_id) &
                 (pv_data['timestamp'] >= future_datetime - time_window) &
@@ -110,7 +104,7 @@ def get_pv_truth(testset: pd.DataFrame):
             matching_data = pv_data[mask]
             
             if len(matching_data) > 0:
-                # Find closest match by time difference
+                # find closest match by time difference
                 matching_data = matching_data.copy()
                 matching_data['time_diff'] = abs(matching_data['timestamp'] - future_datetime)
                 value = matching_data.loc[matching_data['time_diff'].idxmin(), 'value']
