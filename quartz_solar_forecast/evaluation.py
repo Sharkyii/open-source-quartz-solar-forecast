@@ -32,7 +32,7 @@ except Exception:
     )
 
 
-def run_eval(testset_path: str = "dataset/testset.csv", create_visualizations: bool = True):
+def run_eval(testset_path: str = "dataset/testset.csv"):
     # load testset from csv
     testset = pd.read_csv(testset_path)
 

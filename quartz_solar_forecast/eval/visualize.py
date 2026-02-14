@@ -154,13 +154,19 @@ def visualize_results(results_df, pv_metadata):
     output_dir = "images"
     os.makedirs(output_dir, exist_ok=True)
     
+    bounds_padding = 0.5
+    lon_begin = pv_metadata['longitude'].min() - bounds_padding
+    lon_end = pv_metadata['longitude'].max() + bounds_padding
+    lat_begin = pv_metadata['latitude'].min() - bounds_padding
+    lat_end = pv_metadata['latitude'].max() + bounds_padding
+    
     dem_file = download_dem_file()
     
-    elevation_file = os.path.join(output_dir, "brit_elevation.jpg")
-    create_elevation_map(dem_file, -7.6, 1.6, 50.8, 58.5, elevation_file)
+    elevation_file = os.path.join(output_dir, "elevation.jpg")
+    create_elevation_map(dem_file, lon_begin, lon_end, lat_begin, lat_end, elevation_file)
 
-    pv_file = os.path.join(output_dir, "pv_map.jpg")
-    create_pv_heatmap(results_df, pv_metadata, -7.6, 1.6, 50.8, 58.5, pv_file)
+    pv_file = os.path.join(output_dir, "pv_heatmap.jpg")
+    create_pv_heatmap(results_df, pv_metadata, lon_begin, lon_end, lat_begin, lat_end, pv_file)
 
-    overlay_file = os.path.join(output_dir, "final_overlay.jpg")
+    overlay_file = os.path.join(output_dir, "overlay.jpg")
     create_overlay_map(elevation_file, pv_file, overlay_file)
