@@ -1,5 +1,4 @@
 import os
-
 import numpy as np
 import pandas as pd
 from huggingface_hub import HfFileSystem
@@ -8,6 +7,7 @@ fs = HfFileSystem()
 
 
 def get_pv_metadata(testset: pd.DataFrame):
+    # Download from Hugging Face or load from cache
     cache_dir = "data/pv"
     metadata_file = f"{cache_dir}/metadata.csv"
     
@@ -15,25 +15,31 @@ def get_pv_metadata(testset: pd.DataFrame):
         os.makedirs(cache_dir, exist_ok=True)
         fs.get("datasets/openclimatefix/uk_pv/metadata.csv", metadata_file)
 
+    # Load and prepare metadata
     metadata_df = pd.read_csv(metadata_file)
     metadata_df = metadata_df.rename(columns={"ss_id": "pv_id"})
     
+    # Join metadata with testset
     combined_data = testset.merge(metadata_df, on="pv_id", how="left")
+    
+    # Select and rename columns
     combined_data = combined_data[["pv_id", "timestamp", "latitude_rounded", "longitude_rounded", "kwp"]]
     combined_data = combined_data.rename(columns={
         "latitude_rounded": "latitude",
         "longitude_rounded": "longitude",
         "kwp": "capacity",
     })
+    
+    # Format datetime
     combined_data["timestamp"] = pd.to_datetime(combined_data["timestamp"])
-
+    
     return combined_data
 
 
 def get_pv_truth(testset: pd.DataFrame):
     """
     Load PV ground truth data from Hugging Face dataset.
-    Dataset structure: 5_minutely/year=YYYY/month=MM/data.parquet
+    Dataset now uses parquet format: 5_minutely/year=YYYY/month=MM/data.parquet
     """
     print("Loading PV data")
     
@@ -64,6 +70,7 @@ def get_pv_truth(testset: pd.DataFrame):
             print(f"Loaded {len(df)} records from {year}-{month:02d}")
         except Exception as e:
             print(f"Skipping {year}-{month:02d}: {e}")
+            # Remove corrupted cache file
             if os.path.exists(cache_file):
                 os.remove(cache_file)
             continue
@@ -89,7 +96,7 @@ def get_pv_truth(testset: pd.DataFrame):
         if base_datetime.tz is None and pv_data['timestamp'].dt.tz is not None:
             base_datetime = base_datetime.tz_localize('UTC')
         
-        # Generate 48-hour forecast horizon
+        # Generate 48-hour forecast horizon (0-48 hours)
         for i in range(49):
             future_datetime = base_datetime + pd.Timedelta(hours=i)
             time_window = pd.Timedelta(minutes=5)
@@ -103,6 +110,7 @@ def get_pv_truth(testset: pd.DataFrame):
             matching_data = pv_data[mask]
             
             if len(matching_data) > 0:
+                # Find closest match by time difference
                 matching_data = matching_data.copy()
                 matching_data['time_diff'] = abs(matching_data['timestamp'] - future_datetime)
                 value = matching_data.loc[matching_data['time_diff'].idxmin(), 'value']
