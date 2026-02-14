@@ -14,7 +14,7 @@ def get_pv_metadata(testset: pd.DataFrame):
     if not os.path.exists(metadata_file):
         os.makedirs(cache_dir, exist_ok=True)
         fs.get("datasets/openclimatefix/uk_pv/metadata.csv", metadata_file)
-        
+
     # Load and prepare metadata
     metadata_df = pd.read_csv(metadata_file)
     metadata_df = metadata_df.rename(columns={"ss_id": "pv_id"})
