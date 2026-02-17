@@ -32,7 +32,7 @@ def get_pv_metadata(testset: pd.DataFrame):
     
     # Format datetime
     combined_data["timestamp"] = pd.to_datetime(combined_data["timestamp"])
-    
+
     return combined_data
 
 
