@@ -15,11 +15,11 @@ def get_pv_metadata(testset: pd.DataFrame):
         os.makedirs(cache_dir, exist_ok=True)
         fs.get("datasets/openclimatefix/uk_pv/metadata.csv", metadata_file)
 
-    # Load and prepare metadata
+    # Load in the dataset
     metadata_df = pd.read_csv(metadata_file)
     metadata_df = metadata_df.rename(columns={"ss_id": "pv_id"})
     
-    # Join metadata with testset
+    # join metadata with testset
     combined_data = testset.merge(metadata_df, on="pv_id", how="left")
     
     # Select and rename columns
@@ -30,7 +30,7 @@ def get_pv_metadata(testset: pd.DataFrame):
         "kwp": "capacity",
     })
     
-    # Format datetime
+    # format datetime
     combined_data["timestamp"] = pd.to_datetime(combined_data["timestamp"])
 
     return combined_data
