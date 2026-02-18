@@ -23,11 +23,11 @@ def get_pv_metadata(testset: pd.DataFrame):
     combined_data = testset.merge(metadata_df, on="pv_id", how="left")
     
     # Select and rename columns
-    combined_data = combined_data[["pv_id", "timestamp", "latitude_rounded", "longitude_rounded", "kwp"]]
+    combined_data = combined_data[["pv_id", "timestamp", "latitude_rounded", "longitude_rounded", "kWp"]]
     combined_data = combined_data.rename(columns={
         "latitude_rounded": "latitude",
         "longitude_rounded": "longitude",
-        "kwp": "capacity",
+        "kWp": "capacity",
     })
     
     # format datetime
